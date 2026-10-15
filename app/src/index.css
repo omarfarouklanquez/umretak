@@ -362,3 +362,13 @@ body { overflow-x: hidden; }
 .pattern-dark .badge { background: rgba(255,255,255,.1); color: #fff; }
 .pattern-dark .divider { border-color: rgba(255,255,255,.15); }
 .thumb { width: 96px; height: 96px; border-radius: 10px; overflow: hidden; flex-shrink: 0; }
+
+/* ---------- real map pins (KAYAK-style price pills) ---------- */
+.geomap { width: 100%; border-radius: var(--r); overflow: hidden; z-index: 0; background: #e8efe9; }
+.geomap .leaflet-control-attribution { font-size: 10px; }
+.pin-price { transform: translate(-50%, -50%); background: #fff; color: var(--ink); border: 1px solid var(--dark); border-radius: 12px; padding: 2px 9px; font: 700 12px "IBM Plex Sans Arabic", sans-serif; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,.2); cursor: pointer; display: inline-block; }
+.pin-price.on, .pin-price:hover { background: var(--dark); color: #fff; }
+.pin-station { transform: translate(-50%, -50%); background: var(--brand); color: #fff; border-radius: 8px; padding: 3px 8px; font: 600 11px "IBM Plex Sans Arabic", sans-serif; white-space: nowrap; box-shadow: 0 2px 6px rgba(0,0,0,.25); display: inline-block; }
+.pin-station.on { background: var(--dark); }
+.pin-haram { width: 34px; height: 34px; border-radius: 50%; background: var(--kaaba); border: 3px solid #e7c06a; display: grid; place-items: center; box-shadow: 0 0 0 6px rgba(231,192,106,.3); }
+.pin-haram span { width: 12px; height: 12px; background: #111; border-top: 3px solid #e7c06a; }

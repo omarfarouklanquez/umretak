@@ -1,4 +1,5 @@
 import { photo } from '../lib/media'
+import GeoMap, { hotelMarkers } from '../GeoMap'
 const TRIP_SET = { umrah: 'makkah', hajj: 'makkah', hotel: 'room', flight: 'plane', visa: 'passport', transport: 'car', train: 'train', tour: 'desert', product: 'dates' }
 const tripPhoto = (o) => photo(TRIP_SET[o.items[0].kind] || 'makkah', o.number.charCodeAt(o.number.length - 1), 400)
 import { useState } from 'react'
@@ -85,6 +86,9 @@ export function TripDetail() {
   const q = refundQuote(o, reason)
   const byDate = Object.entries(o.items.reduce((m, i) => { (m[i.date || 'بدون تاريخ'] ||= []).push(i); return m }, {})).sort(([a], [b]) => a.localeCompare(b))
   const canCancel = !['cancelled', 'completed'].includes(o.status)
+  const tripHotels = [...new Set(o.items.flatMap((i) => (i.kind === 'hotel' ? [i.refId] : i.kind === 'umrah' ? (db.get('packages', i.refId)?.hotels || []).map((x) => x.hotelId) : [])))].map((hid) => db.get('hotels', hid)).filter(Boolean)
+  const mapCity = tripHotels[0]?.city
+  if (mapCity) tripHotels.splice(0, tripHotels.length, ...tripHotels.filter((x) => x.city === mapCity))
 
   const ics = () => {
     const ev = o.items.filter((i) => i.date).map((i) => `BEGIN:VEVENT\nUID:${o.id}-${i.refId}\nDTSTART;VALUE=DATE:${i.date.replaceAll('-', '')}\nSUMMARY:${i.title}\nDESCRIPTION:${o.number}\nEND:VEVENT`).join('\n')
@@ -130,6 +134,12 @@ export function TripDetail() {
               </div>
             ))}
           </div>
+          {tripHotels.length > 0 && (
+            <div className="card pad no-print">
+              <h3 className="mb-16">الخريطة</h3>
+              <GeoMap markers={hotelMarkers(tripHotels)} height={320} />
+            </div>
+          )}
           <div className="card pad">
             <h3 className="mb-16">المسافرون</h3>
             <div className="table-wrap"><table className="table"><thead><tr><th>الاسم</th><th>الجواز</th><th>الجنسية</th></tr></thead>

@@ -1,4 +1,5 @@
 import { photo, tourPhoto, vehiclePhoto, visaPhoto } from '../lib/media'
+import GeoMap, { HARAM, STATION_LATLNG } from '../GeoMap'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Car, Check, Clock, FileText, Luggage, MapPinned, Stamp, TrainFront, Users } from 'lucide-react'
@@ -168,6 +169,14 @@ export function TrainPage() {
           })}
         </div>
       )}
+      <div className="section-title"><h2>محطات قطار الحرمين</h2></div>
+      <div className="card pad-s">
+        <GeoMap height={380} active={from}
+          markers={[...STATIONS.map((s) => ({ id: s, latlng: STATION_LATLNG[s], label: s, title: s, type: 'station' })), ...Object.entries(HARAM).map(([c, x]) => ({ id: 'haram-' + c, latlng: x.latlng, title: x.name, type: 'haram' }))]}
+          onPick={(s) => (s === from ? setTo(s) : setFrom(s))}
+          line={['مكة المكرمة (الرصيفة)', 'جدة (السليمانية)', 'مطار جدة (KAIA)', 'رابغ (KAEC)', 'المدينة المنورة'].map((s) => STATION_LATLNG[s])} />
+        <p className="xs muted mt-8">اضغط على محطة لتعيينها كمحطة مغادرة. المواقع تقريبية.</p>
+      </div>
       <div className="section-title"><h2>أسعار التذاكر التقريبية</h2></div>
       <div className="card table-wrap"><table className="table"><thead><tr><th>المسار</th><th>اقتصادية</th><th>رجال الأعمال</th><th>المدة</th></tr></thead>
         <tbody>{fares.map((f) => <tr key={f.id}><td>{f.from} ↔ {f.to}</td><td><Price sar={f.economy} /></td><td><Price sar={f.business} /></td><td>{mins(f.mins)}</td></tr>)}</tbody></table></div>

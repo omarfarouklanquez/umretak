@@ -1,4 +1,5 @@
 import { hotelPhotos, photo } from '../lib/media'
+import GeoMap, { HARAM, hotelLatLng, hotelMarkers } from '../GeoMap'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { BedDouble, Car, Check, Map as MapIcon, MapPin, ShieldCheck } from 'lucide-react'
@@ -9,32 +10,6 @@ import { CheckList, FilterBlock } from './Packages'
 
 const iso = (d) => new Date(d).toISOString().slice(0, 10)
 const CITY = { makkah: 'مكة المكرمة', madinah: 'المدينة المنورة' }
-
-// Stylised map: the Haram in the centre, hotels placed by real walking distance.
-export function HaramMap({ hotels, city, onPick, active }) {
-  const R = 140
-  const max = Math.max(1500, ...hotels.map((h) => h.distanceM))
-  return (
-    <svg viewBox="-160 -160 320 320" style={{ width: '100%', maxHeight: 340, background: '#e8efe9', borderRadius: 12 }} role="img" aria-label="خريطة المسافة إلى الحرم">
-      {[500, 1000, 1500].map((m) => <g key={m}><circle r={(m / max) * R} fill="none" stroke="#c9d7cc" strokeDasharray="4 4" /><text y={-(m / max) * R - 3} fontSize="9" textAnchor="middle" fill="#6b7b70">{m} م</text></g>)}
-      <rect x="-9" y="-9" width="18" height="18" fill="var(--kaaba)" rx="2" />
-      <rect x="-9" y="-4" width="18" height="2.5" fill="#c9a227" />
-      <text y="24" fontSize="10" textAnchor="middle" fontWeight="700">{city === 'madinah' ? 'المسجد النبوي' : 'المسجد الحرام'}</text>
-      {hotels.map((h, i) => {
-        const a = (i * 137.5 * Math.PI) / 180
-        const r = Math.max(24, (h.distanceM / max) * R)
-        const x = Math.cos(a) * r, y = Math.sin(a) * r
-        const on = active === h.id
-        return (
-          <g key={h.id} transform={`translate(${x} ${y})`} style={{ cursor: 'pointer' }} onClick={() => onPick?.(h.id)}>
-            <rect x="-26" y="-11" width="52" height="20" rx="10" fill={on ? 'var(--dark)' : '#fff'} stroke="var(--dark)" strokeWidth=".6" />
-            <text y="3" fontSize="9" textAnchor="middle" fontWeight="700" fill={on ? '#fff' : 'var(--ink)'}>{h.rooms[0].price}</text>
-          </g>
-        )
-      })}
-    </svg>
-  )
-}
 
 const AMEN = ['واي فاي مجاني', 'إفطار', 'نقل للحرم', 'مواقف سيارات', 'سبا', 'إطلالة']
 
@@ -50,6 +25,7 @@ export function HotelsPage() {
   const [sort, setSort] = useState(sp.get('sort') || 'rec')
   const [showMap, setShowMap] = useState(true)
   const [active, setActive] = useState(null)
+  const [mapCity, setMapCity] = useState('makkah')
   const nights = sp.get('in') && sp.get('out') ? Math.max(1, (new Date(sp.get('out')) - new Date(sp.get('in'))) / 864e5) : null
 
   const list = useMemo(() => all.filter((h) =>
@@ -77,7 +53,7 @@ export function HotelsPage() {
           <label className="check row between" style={{ paddingTop: 12 }}><span>إلغاء مجاني</span><input type="checkbox" checked={freeCancel} onChange={(e) => setFreeCancel(e.target.checked)} /></label>
         </aside>
         <div className="col gap-12">
-          {showMap && <div className="card pad-s"><HaramMap hotels={list.slice(0, 14)} city={city} active={active} onPick={(id) => { setActive(id); document.getElementById('h-' + id)?.scrollIntoView({ behavior: 'smooth', block: 'center' }) }} /></div>}
+          {showMap && <div className="card pad-s col gap-8"><div className="row between small"><b>{city ? CITY[city] : 'الخريطة: ' + CITY[mapCity]}</b>{!city && <Chips options={[['makkah', 'مكة'], ['madinah', 'المدينة']]} value={mapCity} onChange={(v) => v && setMapCity(v)} />}</div><GeoMap markers={hotelMarkers(list.filter((h) => h.city === (city || mapCity)), city || mapCity)} active={active} height={360} onPick={(id) => { setActive(id); document.getElementById('h-' + id)?.scrollIntoView({ behavior: 'smooth', block: 'center' }) }} /></div>}
           <div className="row between wrap">
             <span className="small muted">ترتيب حسب</span>
             <Chips options={[['rec', 'الموصى به'], ['price', 'السعر'], ['distance', 'الأقرب للحرم'], ['score', 'التقييم']]} value={sort} onChange={(v) => v && setSort(v)} />
@@ -188,7 +164,7 @@ export function HotelDetail() {
             ))}
           </div>
         )}
-        {tab === 'location' && <div className="card pad grid g-2"><HaramMap hotels={[h]} city={h.city} active={h.id} /><div className="col gap-8"><h3>الموقع</h3><p>{h.area}، {CITY[h.city]}</p><p className="muted">يبعد {h.distanceM} متر عن {h.city === 'makkah' ? 'المسجد الحرام' : 'المسجد النبوي'} — حوالي {Math.ceil(h.distanceM / 80)} دقيقة مشياً.</p></div></div>}
+        {tab === 'location' && <div className="card pad grid g-2"><GeoMap markers={hotelMarkers([h], h.city)} active={h.id} height={360} line={[hotelLatLng(h), HARAM[h.city].latlng]} /><div className="col gap-8"><h3>الموقع</h3><p>{h.area}، {CITY[h.city]}</p><p className="muted">يبعد {h.distanceM} متر عن {h.city === 'makkah' ? 'المسجد الحرام' : 'المسجد النبوي'} — حوالي {Math.ceil(h.distanceM / 80)} دقيقة مشياً.</p></div></div>}
         {tab === 'reviews' && (
           <div className="grid" style={{ gridTemplateColumns: '260px 1fr' }}>
             <div className="card pad col"><span className="price-big">{(h.rating * 2).toFixed(1)}</span><b>{scoreLabel(h.rating)}</b>
