@@ -2,10 +2,11 @@ import { useEffect, useRef } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-// Real interactive map (Leaflet + OpenStreetMap data, CARTO Voyager tiles — free, no API key).
-// Swap TILES for Mapbox/Google/MapTiler in production if you need an SLA.
-const TILES = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-const ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+// Real interactive map: Leaflet + OpenStreetMap standard tiles (free, no API key).
+// OSM's tile server is for light use (see operations.osmfoundation.org/policies/tiles);
+// at scale, self-host tiles or point TILES at another free/OSM-based provider.
+const TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+const ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 
 export const HARAM = {
   makkah: { latlng: [21.4225, 39.8262], name: 'المسجد الحرام' },
@@ -48,7 +49,7 @@ export default function GeoMap({ markers, active, onPick, height = 340, line, zo
 
   useEffect(() => {
     map.current = L.map(el.current, { scrollWheelZoom: false, attributionControl: true, zoomControl: true })
-    L.tileLayer(TILES, { attribution: ATTR, subdomains: 'abcd', maxZoom: 19 }).addTo(map.current)
+    L.tileLayer(TILES, { attribution: ATTR, maxZoom: 19 }).addTo(map.current)
     layer.current = L.layerGroup().addTo(map.current)
     return () => { map.current.remove(); map.current = null }
   }, [])
