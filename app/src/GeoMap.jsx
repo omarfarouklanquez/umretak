@@ -1,12 +1,21 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-// Real interactive map: Leaflet + OpenStreetMap standard tiles (free, no API key).
-// OSM's tile server is for light use (see operations.osmfoundation.org/policies/tiles);
-// at scale, self-host tiles or point TILES at another free/OSM-based provider.
-const TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
-const ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+// Real interactive map: Leaflet + free, no-key tile themes (OpenStreetMap-based + Esri imagery).
+// Free servers are for light use — at scale, self-host tiles or use a paid provider.
+const OSM = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+export const MAP_THEMES = {
+  osm: { label: 'قياسي', url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attr: OSM, max: 19 },
+  light: { label: 'فاتح', url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', attr: OSM + ' &copy; <a href="https://carto.com/attributions">CARTO</a>', max: 20, sub: 'abcd' },
+  voyager: { label: 'ملوّن', url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', attr: OSM + ' &copy; <a href="https://carto.com/attributions">CARTO</a>', max: 20, sub: 'abcd' },
+  dark: { label: 'داكن', url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', attr: OSM + ' &copy; <a href="https://carto.com/attributions">CARTO</a>', max: 20, sub: 'abcd', dark: true },
+  satellite: { label: 'قمر صناعي', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr: 'Tiles &copy; Esri — Maxar, Earthstar Geographics', max: 19, dark: true },
+  hot: { label: 'إنساني', url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', attr: OSM + ', tiles by <a href="https://www.hotosm.org/">HOT</a>', max: 19, sub: 'abc' },
+  topo: { label: 'تضاريس', url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', attr: OSM + ', <a href="https://opentopomap.org">OpenTopoMap</a>', max: 17, sub: 'abc' },
+}
+const THEME_KEY = 'umretak:mapTheme'
+const savedTheme = () => { try { return MAP_THEMES[localStorage.getItem(THEME_KEY)] ? localStorage.getItem(THEME_KEY) : 'voyager' } catch { return 'voyager' } }
 
 export const HARAM = {
   makkah: { latlng: [21.4225, 39.8262], name: 'المسجد الحرام' },
@@ -46,13 +55,23 @@ export default function GeoMap({ markers, active, onPick, height = 340, line, zo
   const el = useRef(null)
   const map = useRef(null)
   const layer = useRef(null)
+  const tiles = useRef(null)
+  const [theme, setTheme] = useState(savedTheme)
 
   useEffect(() => {
     map.current = L.map(el.current, { scrollWheelZoom: false, attributionControl: true, zoomControl: true })
-    L.tileLayer(TILES, { attribution: ATTR, maxZoom: 19 }).addTo(map.current)
     layer.current = L.layerGroup().addTo(map.current)
     return () => { map.current.remove(); map.current = null }
   }, [])
+
+  useEffect(() => {
+    const t = MAP_THEMES[theme]
+    tiles.current?.remove()
+    tiles.current = L.tileLayer(t.url, { attribution: t.attr, maxZoom: t.max, ...(t.sub ? { subdomains: t.sub } : {}) }).addTo(map.current)
+    tiles.current.bringToBack()
+    map.current.setMaxZoom(t.max)
+    try { localStorage.setItem(THEME_KEY, theme) } catch { /* private mode */ }
+  }, [theme])
 
   const key = JSON.stringify(markers.map((m) => [m.id, m.latlng, m.label])) + JSON.stringify(line || [])
   useEffect(() => {
@@ -71,7 +90,16 @@ export default function GeoMap({ markers, active, onPick, height = 340, line, zo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, active])
 
-  return <div ref={el} className="geomap" style={{ height }} dir="ltr" role="region" aria-label="خريطة" />
+  return (
+    <div className={'geomap-wrap' + (MAP_THEMES[theme].dark ? ' is-dark' : '')}>
+      <div ref={el} className="geomap" style={{ height }} dir="ltr" role="region" aria-label="خريطة" />
+      <div className="map-themes" role="radiogroup" aria-label="نمط الخريطة">
+        {Object.entries(MAP_THEMES).map(([k, t]) => (
+          <button key={k} type="button" role="radio" aria-checked={theme === k} className={theme === k ? 'on' : ''} onClick={() => setTheme(k)}>{t.label}</button>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 // Helper: Haram + hotels as price pins.
