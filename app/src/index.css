@@ -372,10 +372,5 @@ body { overflow-x: hidden; }
 .pin-station.on { background: var(--dark); }
 .pin-haram { width: 34px; height: 34px; border-radius: 50%; background: var(--kaaba); border: 3px solid #e7c06a; display: grid; place-items: center; box-shadow: 0 0 0 6px rgba(231,192,106,.3); }
 .pin-haram span { width: 12px; height: 12px; background: #111; border-top: 3px solid #e7c06a; }
-.geomap-wrap { position: relative; }
-.map-themes { position: absolute; top: 10px; inset-inline-start: 10px; z-index: 500; display: flex; flex-wrap: wrap; gap: 4px; max-width: calc(100% - 70px); background: rgba(255,255,255,.92); padding: 4px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.18); }
-.map-themes button { border: 0; background: transparent; padding: 4px 9px; border-radius: 7px; font: 600 12px "IBM Plex Sans Arabic", sans-serif; cursor: pointer; color: var(--ink-2); }
-.map-themes button:hover { background: var(--bg); }
-.map-themes button.on { background: var(--dark); color: #fff; }
-.geomap-wrap.is-dark .pin-price { border-color: #fff; }
-.geomap-wrap.is-dark .leaflet-polyline, .geomap-wrap.is-dark path.leaflet-interactive { stroke: #ffb46a; }
+.geomap.satellite .pin-price { border-color: #fff; }
+.geomap.satellite .leaflet-tooltip { font-family: "IBM Plex Sans Arabic", sans-serif; }
